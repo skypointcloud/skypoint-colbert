@@ -33,6 +33,6 @@ I have not done any performance measurement over these transform methods. Howeve
 # Next Step
 
 ## Performance and configuration
-? Query performance of transformed one dimensional embedding
-? Configuration parameters of ColBERTConfig (chunk size, nbits, kmeans_nitters, nranks on CUDA, bsize, rerank?)
-? Two dimensioned index query is implemented in the index.py. Yet I need to measure the relevancy  rank.
+* Query performance of transformed one dimensional embedding
+* Configuration parameters of ColBERTConfig (chunk size, nbits, kmeans_nitters, nranks on CUDA, bsize, rerank?)
+* Two dimensioned index query is implemented in the index.py. Yet I need to measure the relevancy  rank.
