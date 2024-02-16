@@ -1,0 +1,4 @@
+pyarrow==14.0.0
+corlbert-ai==0.2.19
+torch==2.2.0
+faiss-cpu==1.7.4
