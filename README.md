@@ -15,7 +15,7 @@ Install `faiss-gpu` on CUDA
 
 ## what's in the repo
 * A LangChain Embedding class - [ColbertEmbedding](langchain/libs/community/langchain_community/embeddings/colbert.py). This class runs compute in the local host. If CUDA is available, it can take advantage of GPU computes. Therefore, the `faiss-gpu` module is required on GPU.
-* Indexing and encoding example to test on GPU.
+* Indexing and encoding examples[example] to test on GPU.
 
 ## High dimensional embedding
 ColBERT generates a two dimensional matrix of vector, as supposed to an array of float in the common vector that is supported by most vector store. Therefore, the LangChain compatible [ColBertEmbedding](langchain/libs/community/langchain_community/embeddings/colbert.py) added a step to transform two dimensional metrics to one dimension array. The current implementation offers these strategy: 
