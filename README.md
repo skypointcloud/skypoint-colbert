@@ -30,6 +30,19 @@ TODO: Implement the dimensional reduction as a call back so that a user can impl
 
 I have not done any performance measurement over these transform methods. However, it's a common sense flatten a 2d metrics retains better granularity than Average.
 
+# Web embedding service
+
+A web embedding [service](webserver/webserver) is implemented to provide ColBERT text embedding over HTTP.
+
+Commands to set up dev environment.
+```
+cd webserver
+poetry install
+poetry shell
+cd webserver
+uvicorn main:app --reload
+```
+
 # Next Step
 
 ## Performance and configuration

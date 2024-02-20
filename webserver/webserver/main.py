@@ -5,11 +5,14 @@ import torch
 import os
 import uvicorn
 
-app = FastAPI()
+#
+# This is a web server that provides an API to embed text using the ColBERT model.
+# Limitations:
+# - It only supports the ColBERT model.
+# - It creates new Checkpoint and CollectionEncoder objects for each request.
+#
 
-@app.get("/")
-def read_root():
-    return {"Hello": "World"}
+app = FastAPI()
 
 # Health status
 @app.get("/health")
@@ -47,7 +50,6 @@ def embedding(
     
     if len(texts) == 1:
         result = colbert.embed_query(texts[0])
-        print(f"result is {result}")
         rc = []
         rc.append(result)
         return {"embeddings": rc}

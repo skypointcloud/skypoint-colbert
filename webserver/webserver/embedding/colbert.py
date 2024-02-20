@@ -172,10 +172,8 @@ class ColbertEmbeddings(Embeddings):
         start_indices = [0] + list(itertools.accumulate(count[:-1]))
         embeddings_by_part = [embeddings[start:start+count] for start, count in zip(start_indices, count)]
         for part, embedding in enumerate(embeddings_by_part):
-            # print(f"embedding part {part} shape {embeddings_by_part}")
-            # print(f"Inserted {len(embedding)} shape {embedding.shape} embeddings for part {part}")
             norm = normalize_list(embedding, self.normalization_category)
-            print(f"embedding part {part} norm {norm}")
+            # return since the list size is one
             return norm
 
         # norm = normalize_list(embeddings_by_part[0], self.normalization_category)
@@ -190,7 +188,6 @@ class ColbertEmbeddings(Embeddings):
         for part, embedding in enumerate(embeddings_by_part):
             norm = normalize_list(embedding, self.normalization_category)
             rc.append(norm)
-            print(f"embedding part {part} norm {norm}")
 
         return rc
 
