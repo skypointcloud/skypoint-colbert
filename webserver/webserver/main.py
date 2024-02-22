@@ -14,6 +14,10 @@ import uvicorn
 
 app = FastAPI()
 
+# Create a default ColbertEmbeddings that helps to embed text performance/latency
+# no need to create a new ColBERT checkpoint object everytime
+colBERTConfigs = {}
+
 # Health status
 @app.get("/health")
 def read_root():
@@ -38,13 +42,19 @@ def embedding(
     nranks: int = Query(1),
     normalization_category: str = Query(NormalizationCategory.FLAT),
 ):
-    colbert = ColbertEmbeddings(
-        doc_maxlen=doc_maxlen,
-        nbits=nbits,
-        kmeans_niters=kmeans_niters,
-        nranks=nranks,
-        normalization_category=normalization_category,
-    )
+    key = f"{doc_maxlen}_{nbits}_{kmeans_niters}_{nranks}_{normalization_category}"
+    if key in colBERTConfigs:
+        colbert = colBERTConfigs[key]
+    else:
+        colbert = ColbertEmbeddings(
+            doc_maxlen=doc_maxlen,
+            nbits=nbits,
+            kmeans_niters=kmeans_niters,
+            nranks=nranks,
+            normalization_category=normalization_category,
+        )
+        colBERTConfigs[key] = colbert
+
     if len(texts) == 0:
         return {"error": "No text to embed"}
     

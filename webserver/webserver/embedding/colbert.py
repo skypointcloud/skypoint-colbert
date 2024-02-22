@@ -180,12 +180,19 @@ class ColbertEmbeddings(Embeddings):
 
     def encode(self, texts: List[List[str]]) -> List[List[float]]:
         """Encode the given texts."""
+        # embeddings is a tensor of shape (n, 128) n is the number of tokens in the total passage
+        # count is the number of tokens in each passage
         embeddings, count = self.encoder.encode_passages(texts)
+
+        # the starting index of each passage or text
         start_indices = [0] + list(itertools.accumulate(count[:-1]))
+        # embeddings_by_part is a list of tensors, each tensor is a passage
         embeddings_by_part = [embeddings[start:start+count] for start, count in zip(start_indices, count)]
         
         rc = []
         for part, embedding in enumerate(embeddings_by_part):
+            # each embedding is a tensor of shape (n, 128) n is the number of tokens in the passage
+            # shape {embedding.shape}, len(embedding) is the number of tokens in the passage
             norm = normalize_list(embedding, self.normalization_category)
             rc.append(norm)
 
