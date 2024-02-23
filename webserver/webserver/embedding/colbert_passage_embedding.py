@@ -178,7 +178,7 @@ class ColbertEmbeddings(Embeddings):
 
         # norm = normalize_list(embeddings_by_part[0], self.normalization_category)
 
-    def encode(self, texts: List[List[str]]) -> List[List[float]]:
+    def encode(self, texts: List[str]) -> List[List[float]]:
         """Encode the given texts."""
         # embeddings is a tensor of shape (n, 128) n is the number of tokens in the total passage
         # count is the number of tokens in each passage
@@ -198,7 +198,7 @@ class ColbertEmbeddings(Embeddings):
 
         return rc
 
-    def encode_on_cuda(self, texts: List[List[str]]) -> List[List[float]]:
+    def encode_on_cuda(self, texts: List[str]) -> List[List[float]]:
         with Run().context(RunConfig(nranks=self.__nranks, experiment='notebook')):  # nranks specifies the number of GPUs to use
             config = ColBERTConfig(
                 doc_maxlen=self.__doc_maxlen,
