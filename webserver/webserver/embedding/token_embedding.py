@@ -9,7 +9,7 @@ from langchain_core.runnables.config import run_in_executor
 
 class PerTokenEmbeddings():
 
-    __embeddings: List[List[float]]
+    __embeddings: List[float]
 
     def __init__(
             self,
@@ -24,7 +24,7 @@ class PerTokenEmbeddings():
     def add_embeddings(self, embeddings: List[float]): 
         self.__embeddings.append(embeddings)
 
-class CollectionsEmbeddings():
+class PassageEmbeddings():
     __token_embeddings: List[PerTokenEmbeddings]
     __text: str
     __id: uuid.UUID
@@ -74,11 +74,11 @@ class TokenEmbeddings(ABC):
     """Interface for token embedding models."""
 
     @abstractmethod
-    def embed_documents(self, texts: List[str]) -> List[CollectionsEmbeddings]:
+    def embed_documents(self, texts: List[str]) -> List[PassageEmbeddings]:
         """Embed search docs."""
 
     @abstractmethod
-    def embed_query(self, text: str) -> CollectionsEmbeddings:
+    def embed_query(self, text: str) -> PassageEmbeddings:
         """Embed query text."""
 
     async def aembed_documents(self, texts: List[str]) -> List[List[float]]:

@@ -1,7 +1,7 @@
 from typing import Any, Dict, List
 import itertools
 import torch # it should part of colbert dependencies
-from .token_embedding import TokenEmbeddings, PerTokenEmbeddings, CollectionsEmbeddings
+from .token_embedding import TokenEmbeddings, PerTokenEmbeddings, PassageEmbeddings
 from langchain_core.pydantic_v1 import Extra, root_validator
 
 
@@ -100,7 +100,7 @@ class ColbertTokenEmbeddings(TokenEmbeddings):
             nbits=nbits,
             kmeans_niters=kmeans_niters,
             nranks=nranks,
-            checkpoint='colbert-ir/colbertv2.0' # checkpoint,
+            checkpoint=checkpoint,
         )
         self.__doc_maxlen = doc_maxlen
         self.__nbits = nbits
@@ -119,7 +119,7 @@ class ColbertTokenEmbeddings(TokenEmbeddings):
             return self.encode(texts)
 
 
-    def embed_query(self, text: str, title: str) -> CollectionsEmbeddings:
+    def embed_query(self, text: str, title: str) -> PassageEmbeddings:
         """Embed query text."""
         collections=[]
         collections.append(text)
@@ -128,7 +128,7 @@ class ColbertTokenEmbeddings(TokenEmbeddings):
         embeddings_by_part = [embeddings[start:start+count] for start, count in zip(start_indices, count)]
 
         perToken = PerTokenEmbeddings(title, text)
-        collectionEmbd = CollectionsEmbeddings(title, text)
+        collectionEmbd = PassageEmbeddings(title, text)
         for __part, embedding in enumerate(embeddings_by_part):
             perToken.add_embeddings(embedding)
 
@@ -136,7 +136,7 @@ class ColbertTokenEmbeddings(TokenEmbeddings):
 
 
 
-    def encode(self, texts: List[List[str]]) -> List[CollectionsEmbeddings]:
+    def encode(self, texts: List[str]) -> List[PassageEmbeddings]:
         with Run().context(RunConfig(nranks=self.__nranks, experiment='notebook')):  # nranks specifies the number of GPUs to use
             config = ColBERTConfig(
                 doc_maxlen=self.__doc_maxlen,
@@ -155,7 +155,7 @@ class ColbertTokenEmbeddings(TokenEmbeddings):
             embeddings_by_part = [embeddings[start:start+count] for start, count in zip(start_indices, count)]
             size = len(embeddings_by_part)
             for part, embedding in enumerate(embeddings_by_part):
-                collectionEmbd = CollectionsEmbeddings(texts[part], texts[part])
+                collectionEmbd = PassageEmbeddings(texts[part], texts[part])
                 for __part, perTokenEmbedding in enumerate(embedding):
                     perToken = PerTokenEmbeddings(texts[part], texts[part])
                     perToken.add_embeddings(perTokenEmbedding)
