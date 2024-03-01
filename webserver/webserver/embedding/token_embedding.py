@@ -13,13 +13,12 @@ class PerTokenEmbeddings():
 
     def __init__(
             self,
-            token_id: int,
+            id: int,
             parent_id: int,
-            title: str,
         ):
-        self.token_id = token_id
+        self.id = id
         self.parent_id = parent_id
-        self.title = title
+        self.__embeddings = []
 
     def add_embeddings(self, embeddings: List[float]): 
         self.__embeddings.append(embeddings)
@@ -31,13 +30,12 @@ class PassageEmbeddings():
 
     def __init__(
             self,
-            title: str,
             text: str,
-            token_ids: List[int],
             id: uuid.UUID = None,
         ):
-        self.token_ids = token_ids
-        self.title = title
+        #self.token_ids = token_ids
+        self.__text = text
+        self.__token_embeddings = []
         if id is None:
             self.__id = uuid.uuid4()
         else:

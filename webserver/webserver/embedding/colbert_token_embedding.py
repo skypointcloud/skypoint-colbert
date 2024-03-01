@@ -7,7 +7,7 @@ from langchain_core.pydantic_v1 import Extra, root_validator
 
 from colbert.indexing.collection_indexer import CollectionIndexer
 from colbert.infra import Run, RunConfig, ColBERTConfig
-from colbert.data import Queries, Collection
+from colbert.data import Queries
 from colbert.indexing.collection_encoder import CollectionEncoder
 from colbert.modeling.checkpoint import Checkpoint
 
@@ -88,7 +88,7 @@ class ColbertTokenEmbeddings(TokenEmbeddings):
     
     def __init__(
             self,
-            checkpoint: str = "colbert-ir/cobertv2.0", 
+            checkpoint: str = "colbert-ir/colbertv2.0", 
             doc_maxlen: int = 220,
             nbits: int = 1,
             kmeans_niters: int = 4,
@@ -137,33 +137,39 @@ class ColbertTokenEmbeddings(TokenEmbeddings):
 
 
     def encode(self, texts: List[str]) -> List[PassageEmbeddings]:
-        with Run().context(RunConfig(nranks=self.__nranks, experiment='notebook')):  # nranks specifies the number of GPUs to use
-            config = ColBERTConfig(
-                doc_maxlen=self.__doc_maxlen,
-                nbits=self.__nbits,
-                kmeans_niters=self.__kmeans_niters,
-                checkpoint=self.checkpoint,
-                index_bsize=1)
-            ckp = Checkpoint(config.checkpoint, colbert_config=config)
+        # collection = Collection(texts)
+        # batches = collection.enumerate_batches(rank=Run().rank)
+        ''' 
+        config = ColBERTConfig(
+            doc_maxlen=self.__doc_maxlen,
+            nbits=self.__nbits,
+            kmeans_niters=self.__kmeans_niters,
+            checkpoint=self.checkpoint,
+            index_bsize=1)
+        ckp = Checkpoint(config.checkpoint, colbert_config=config)
+        encoder = CollectionEncoder(config=self.config, checkpoint=self.checkpoint)
+        '''
+        embeddings, count = self.encoder.encode_passages(texts)
 
-            encoder = CollectionEncoder(config=config, checkpoint=ckp)
-            embeddings, count = encoder.encode_passages(texts)
-
-            collectionEmbds = []
-            # split up embeddings by counts, a list of the number of tokens in each passage
-            start_indices = [0] + list(itertools.accumulate(count[:-1]))
-            embeddings_by_part = [embeddings[start:start+count] for start, count in zip(start_indices, count)]
-            size = len(embeddings_by_part)
-            for part, embedding in enumerate(embeddings_by_part):
-                collectionEmbd = PassageEmbeddings(texts[part], texts[part])
-                for __part, perTokenEmbedding in enumerate(embedding):
-                    perToken = PerTokenEmbeddings(texts[part], texts[part])
-                    perToken.add_embeddings(perTokenEmbedding)
+        collectionEmbds = []
+        # split up embeddings by counts, a list of the number of tokens in each passage
+        start_indices = [0] + list(itertools.accumulate(count[:-1]))
+        embeddings_by_part = [embeddings[start:start+count] for start, count in zip(start_indices, count)]
+        size = len(embeddings_by_part)
+        for part, embedding in enumerate(embeddings_by_part):
+            collectionEmbd = PassageEmbeddings(text=texts[part])
+            pid = collectionEmbd.id_str()
+            token_id = 0
+            for __part, perTokenEmbedding in enumerate(embedding):
+                perToken = PerTokenEmbeddings(parent_id=pid, id=token_id)
+                perToken.add_embeddings(perTokenEmbedding.tolist())
+                print(f"    token embedding part {__part} parent id {pid}")
                 collectionEmbd.add_token_embeddings(perToken)
-                collectionEmbds.append(collectionEmbd)
-                print(f"embedding part {part} ") #norm {norm}")
+                token_id += 1
+            collectionEmbds.append(collectionEmbd)
+            print(f"embedding part {part} collection id {pid}, collection size {len(collectionEmbd.get_all_token_embeddings())}")
 
-            return collectionEmbds
+        return collectionEmbds
 
     async def aembed_documents(self, texts: List[str]) -> List[List[float]]:
         """Asynchronous Embed search docs."""

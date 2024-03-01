@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Query
 from typing import List
-from embedding import ColbertEmbeddings, NormalizationCategory
+from embedding import ColbertEmbeddings, ColbertTokenEmbeddings, NormalizationCategory
 import torch
 import os
 import uvicorn
@@ -46,7 +46,7 @@ def embedding(
     if key in colBERTConfigs:
         colbert = colBERTConfigs[key]
     else:
-        colbert = ColbertEmbeddings(
+        colbert = ColbertTokenEmbeddings(
             doc_maxlen=doc_maxlen,
             nbits=nbits,
             kmeans_niters=kmeans_niters,
