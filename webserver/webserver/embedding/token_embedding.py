@@ -32,6 +32,8 @@ class PassageEmbeddings():
             self,
             text: str,
             id: uuid.UUID = None,
+            model: str = "colbert-ir/colbertv2.0",
+            dim: int = 128,
         ):
         #self.token_ids = token_ids
         self.__text = text
@@ -40,6 +42,14 @@ class PassageEmbeddings():
             self.__id = uuid.uuid4()
         else:
             self.__id = id
+        self.__model = model
+        self.__dim = dim
+
+    def model(self):
+        return self.__model
+
+    def dim(self):
+        return self.__dim
 
     def token_size(self):
         return len(self.token_ids)
