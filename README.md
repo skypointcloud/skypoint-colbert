@@ -14,21 +14,88 @@ Install `faiss-gpu` on CUDA
 
 
 ## what's in the repo
-* A LangChain Embedding class - [ColbertEmbedding](langchain/libs/community/langchain_community/embeddings/colbert.py). This class runs compute in the local host. If CUDA is available, it can take advantage of GPU computes. Therefore, the `faiss-gpu` module is required on GPU.
+* Embedding
+* Astra loader
+* Astra vector based retriever
+* A web server for embedding service
 * Indexing and encoding examples[example] to test on GPU.
 
-## High dimensional embedding
-ColBERT generates a two dimensional matrix of vector, as supposed to an array of float in the common vector that is supported by most vector store. Therefore, the LangChain compatible [ColBertEmbedding](langchain/libs/community/langchain_community/embeddings/colbert.py) added a step to transform two dimensional metrics to one dimension array. The current implementation offers these strategy: 
-1. Flat (default): Flattening the two-dimensional array into a one-dimensional array is a straightforward approach. However, this method can significantly increase the dimensionality of the vector and may not be practical or meaningful, especially since the order of flattened elements loses the spatial relationship inherent in the two-dimensional structure.
-2. Average: To average the embeddings across tokens to produce a single vector that represents the entire text. This approach reduces the N×D matrix to a one-dimensional D-dimensional vector. While this method loses some granularity, it preserves the overall semantic meaning of the text. 
-3. Principle Component Analysis (PCA): a common linear dimension reduction method
-4. Max pooling: it takes the maximum value across each dimension of the embeddings, resulting in a single 
-D-dimensional vector.
-5. Min-pooling works similarly but takes the minimum values, potentially capturing different aspects of the semantic space.
+## Examples
 
-TODO: Implement the dimensional reduction as a call back so that a user can implement custom aggregation.
+### LangChain/RagSTACK loader and splitter
 
-I have not done any performance measurement over these transform methods. However, it's a common sense flatten a 2d metrics retains better granularity than Average.
+Load, split and prepare the documents
+
+```python
+from langchain_community.document_loaders import DirectoryLoader
+from langchain_community.document_loaders import PyPDFLoader
+import os
+
+# pip install pypdf
+loader =DirectoryLoader(
+    path="./files",
+    glob="**/*.pdf",
+    loader_cls=PyPDFLoader,
+    recursive=True,
+)
+
+docs = loader.load()
+
+from langchain.text_splitter import CharacterTextSplitter
+text_splitter = CharacterTextSplitter(
+    separator="\n",
+    chunk_size=500, # colbert doc_maxlen is 220
+    chunk_overlap=100,
+    length_function=len,
+)
+
+splits = text_splitter.split_documents(docs)
+title = docs[0].metadata['source']
+collections = []
+
+for part in splits:
+    collections.append(part.page_content)
+```
+
+### Create ColBERT Embeddings
+
+```python
+from embedding import ColbertTokenEmbeddings
+
+colbert = ColbertTokenEmbeddings(
+    doc_maxlen=220,
+    nbits=1,
+    kmeans_niters=4,
+    nranks=1,
+)
+
+passageEmbeddings = colbert.embed_documents(texts=collections, title=title)
+```
+
+### Load ColBERT embeddings into Astra DB
+Create tables and load embeddings
+
+```python
+from embedding import AstraDB
+import os
+
+# astra db
+astra = AstraDB(
+    secure_connect_bundle="/Users/mingluo/Downloads/secure-connect-mingv1.zip",
+    astra_token=os.getenv("ASTRA_TOKEN"),
+    keyspace="colbert128"
+)
+```
+
+### Retrieval from AstraDB
+
+```python
+from embedding import ColbertAstraRetriever
+
+retriever = ColbertAstraRetriever(astraDB=astra, colbertEmbeddings=colbert)
+answers = retriever.retrieve("what's the toll free number to call for help?")
+```
+
 
 # Web embedding service
 
@@ -44,6 +111,7 @@ uvicorn main:app --reload
 ```
 
 # Next Step
+## Parallel loading of embeddings to Astra
 
 ## Performance and configuration
 * Query performance of transformed one dimensional embedding

@@ -18,6 +18,7 @@ class AstraDB:
             astra_token: str=None,
             keyspace: str="colbert128",
             verbose: bool=False,
+            timeout: int=60,
             **kwargs,
         ):
         
@@ -36,7 +37,7 @@ class AstraDB:
         )
         self.keyspace = keyspace
         self.session = self.cluster.connect()
-        self.session.default_timeout = 60
+        self.session.default_timeout = timeout
         self.verbose = verbose
 
         print(f"set up keyspace {keyspace}, tables and indexes...")
@@ -49,8 +50,8 @@ class AstraDB:
         # prepare statements
 
         insert_chunk_cql = f"""
-        INSERT INTO {keyspace}.chunks (title, part, body, ada002_embedding)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO {keyspace}.chunks (title, part, body)
+        VALUES (?, ?, ?)
         """
         self.insert_chunk_stmt = self.session.prepare(insert_chunk_cql)
 
@@ -59,14 +60,6 @@ class AstraDB:
         VALUES (?, ?, ?, ?)
         """
         self.insert_colbert_stmt = self.session.prepare(insert_colbert_cql)
-
-        query_ada_cql = f"""
-        SELECT title, body
-        FROM {keyspace}.chunks
-        ORDER BY ada002_embedding ANN OF ?
-        LIMIT 5
-        """
-        self.query_ada_stmt = self.session.prepare(query_ada_cql)
 
         query_colbert_ann_cql = f"""
         SELECT title, part
@@ -104,18 +97,10 @@ class AstraDB:
                 title text,
                 part int,
                 body text,
-                ada002_embedding vector<float, 1536>,
                 PRIMARY KEY (title, part)
             );
         """)
         print("Created chunks table")
-
-        self.create_index("""
-            CREATE CUSTOM INDEX openai_ann ON chunks(ada002_embedding) USING 'StorageAttachedIndex'
-  WITH OPTIONS = { 'similarity_function': 'DOT_PRODUCT' };
-        """)
-        print("Created index on chunks table")
-            
 
         self.session.execute("""
             CREATE TABLE IF NOT EXISTS colbert_embeddings (
@@ -150,8 +135,7 @@ class AstraDB:
 
 
     def insert_chunk(self, title: str, part: int, body: str):
-        ada002_embedding_placeholder = [0.0] * 1536  
-        self.session.execute(self.insert_chunk_stmt, (title, part, body, ada002_embedding_placeholder))
+        self.session.execute(self.insert_chunk_stmt, (title, part, body))
     
     def insert_colbert_embeddings_chunks(
         self,

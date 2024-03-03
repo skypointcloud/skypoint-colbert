@@ -135,6 +135,9 @@ class ColbertTokenEmbeddings(TokenEmbeddings):
 
         return collectionEmbd
 
+    def encode_query(self, query: str):
+        rc = self.checkpoint.queryFromText([query])
+        return rc[0]
 
 
     def encode(self, texts: List[str], title: str="") -> List[PassageEmbeddings]:
