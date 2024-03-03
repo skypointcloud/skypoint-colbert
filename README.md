@@ -14,11 +14,25 @@ Install `faiss-gpu` on CUDA
 
 
 ## what's in the repo
-Core of embedding, database loader, retriever and ranker is at this [folder](webserver/webserver/embedding) that includes
-* Embedding
+Code is at this [folder](webserver/webserver/embedding) that includes
+* A ColBERT Embedding class
 * Astra loader
-* Astra vector based retriever
-An [example](webserver/webserver/example.py) of RAG using ColBERT embedding, Astra DB vector store, retriever (including a default ranker).
+* Astra vector based retriever including a ranker
+A chat bot [example](webserver/webserver/example.py) of RAG using ColBERT embedding, Astra DB vector store, retriever (including a default ranker).
+
+How to run the example and prerequisites:
+* Specify the directory of pdf files
+* Create a AstraDB keyspace and specify the keyspace name in the example code
+* Download Secure Connect Bundle and specify the path in the example
+* Create an AstraCS token to export as `ASTRA_TOKEN`
+
+```
+cd webserver
+poetry install
+poetry shell
+cd webserver
+python example.py
+```
 
 ### extra
 * A web server for embedding service
