@@ -158,15 +158,13 @@ class ColbertTokenEmbeddings(TokenEmbeddings):
         embeddings_by_part = [embeddings[start:start+count] for start, count in zip(start_indices, count)]
         size = len(embeddings_by_part)
         for part, embedding in enumerate(embeddings_by_part):
-            collectionEmbd = PassageEmbeddings(text=texts[part], title=title)
+            collectionEmbd = PassageEmbeddings(text=texts[part], title=title, part=part)
             pid = collectionEmbd.id()
-            token_id = 0
-            for __part, perTokenEmbedding in enumerate(embedding):
-                perToken = PerTokenEmbeddings(parent_id=pid, id=token_id, title=title)
+            for __part_i, perTokenEmbedding in enumerate(embedding):
+                perToken = PerTokenEmbeddings(parent_id=pid, id=__part_i, title=title, part=part)
                 perToken.add_embeddings(perTokenEmbedding.tolist())
-                print(f"    token embedding part {__part} id {token_id} parent id {pid}")
+                print(f"    token embedding part {part} id {__part_i} parent id {pid}")
                 collectionEmbd.add_token_embeddings(perToken)
-                token_id += 1
             collectionEmbds.append(collectionEmbd)
             # print(f"embedding part {part} collection id {pid}, collection size {len(collectionEmbd.get_all_token_embeddings())}")
 

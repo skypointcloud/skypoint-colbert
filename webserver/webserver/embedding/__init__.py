@@ -2,3 +2,4 @@
 from .colbert_passage_embedding import ColbertEmbeddings
 from .colbert_passage_embedding import NormalizationCategory
 from .colbert_token_embedding import ColbertTokenEmbeddings
+from .astra_db import AstraDB

@@ -14,6 +14,7 @@ class PerTokenEmbeddings():
     def __init__(
             self,
             id: int,
+            part: int,
             parent_id: uuid.UUID = None,
             title: str = "",
         ):
@@ -21,6 +22,7 @@ class PerTokenEmbeddings():
         self.parent_id = parent_id
         self.__embeddings = []
         self.title = title
+        self.part =part
 
     def add_embeddings(self, embeddings: List[float]): 
         self.__embeddings = embeddings
@@ -34,6 +36,9 @@ class PerTokenEmbeddings():
     def parent_id(self):
         return self.parent_id
 
+    def part(self):
+        return self.part
+
 class PassageEmbeddings():
     __token_embeddings: List[PerTokenEmbeddings]
     __text: str
@@ -44,6 +49,7 @@ class PassageEmbeddings():
             self,
             text: str,
             title: str = "",
+            part: int = 0,
             id: uuid.UUID = None,
             model: str = "colbert-ir/colbertv2.0",
             dim: int = 128,
@@ -58,6 +64,7 @@ class PassageEmbeddings():
         self.__model = model
         self.__dim = dim
         self.__title = title
+        self.__part  =  part 
 
     def model(self):
         return self.__model
@@ -76,6 +83,9 @@ class PassageEmbeddings():
 
     def id(self):
         return self.__id
+    
+    def part(self):
+        return self.__part
 
     def add_token_embeddings(self, token_embeddings: PerTokenEmbeddings):
         self.__token_embeddings.append(token_embeddings)
