@@ -111,12 +111,13 @@ class ColbertTokenEmbeddings(TokenEmbeddings):
         self.encoder = CollectionEncoder(config=self.colbert_config, checkpoint=self.checkpoint)
 
 
-    def embed_documents(self, texts: List[str]) -> List[TokenEmbeddings]:
+    def embed_documents(self, texts: List[str], title: str="") -> List[PassageEmbeddings]:
         """Embed search docs."""
         if self.__is_cuda:
-            return self.encode_on_cuda(texts)
+            # TODO: implement GPU support
+            return self.encode(texts, title)
         else:
-            return self.encode(texts)
+            return self.encode(texts, title)
 
 
     def embed_query(self, text: str, title: str) -> PassageEmbeddings:
@@ -127,8 +128,8 @@ class ColbertTokenEmbeddings(TokenEmbeddings):
         start_indices = [0] + list(itertools.accumulate(count[:-1]))
         embeddings_by_part = [embeddings[start:start+count] for start, count in zip(start_indices, count)]
 
-        perToken = PerTokenEmbeddings(title, text)
-        collectionEmbd = PassageEmbeddings(title, text)
+        perToken = PerTokenEmbeddings(title=title, text=text)
+        collectionEmbd = PassageEmbeddings(title=title, text=text)
         for __part, embedding in enumerate(embeddings_by_part):
             perToken.add_embeddings(embedding)
 
@@ -136,7 +137,7 @@ class ColbertTokenEmbeddings(TokenEmbeddings):
 
 
 
-    def encode(self, texts: List[str]) -> List[PassageEmbeddings]:
+    def encode(self, texts: List[str], title: str="") -> List[PassageEmbeddings]:
         # collection = Collection(texts)
         # batches = collection.enumerate_batches(rank=Run().rank)
         ''' 
@@ -157,17 +158,17 @@ class ColbertTokenEmbeddings(TokenEmbeddings):
         embeddings_by_part = [embeddings[start:start+count] for start, count in zip(start_indices, count)]
         size = len(embeddings_by_part)
         for part, embedding in enumerate(embeddings_by_part):
-            collectionEmbd = PassageEmbeddings(text=texts[part])
-            pid = collectionEmbd.id_str()
+            collectionEmbd = PassageEmbeddings(text=texts[part], title=title)
+            pid = collectionEmbd.id()
             token_id = 0
             for __part, perTokenEmbedding in enumerate(embedding):
-                perToken = PerTokenEmbeddings(parent_id=pid, id=token_id)
+                perToken = PerTokenEmbeddings(parent_id=pid, id=token_id, title=title)
                 perToken.add_embeddings(perTokenEmbedding.tolist())
-                print(f"    token embedding part {__part} parent id {pid}")
+                print(f"    token embedding part {__part} id {token_id} parent id {pid}")
                 collectionEmbd.add_token_embeddings(perToken)
                 token_id += 1
             collectionEmbds.append(collectionEmbd)
-            print(f"embedding part {part} collection id {pid}, collection size {len(collectionEmbd.get_all_token_embeddings())}")
+            # print(f"embedding part {part} collection id {pid}, collection size {len(collectionEmbd.get_all_token_embeddings())}")
 
         return collectionEmbds
 
