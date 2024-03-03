@@ -14,10 +14,15 @@ Install `faiss-gpu` on CUDA
 
 
 ## what's in the repo
+Core of embedding, database loader, retriever and ranker is at this [folder](webserver/webserver/embedding) that includes
 * Embedding
 * Astra loader
 * Astra vector based retriever
+An [example](webserver/webserver/example.py) of RAG using ColBERT embedding, Astra DB vector store, retriever (including a default ranker).
+
+### extra
 * A web server for embedding service
+* Dockerfile of the web embedding service
 * Indexing and encoding examples[example] to test on GPU.
 
 ## Examples
@@ -81,7 +86,7 @@ import os
 
 # astra db
 astra = AstraDB(
-    secure_connect_bundle="/Users/mingluo/Downloads/secure-connect-mingv1.zip",
+    secure_connect_bundle="./secure-connect-mingv1.zip",
     astra_token=os.getenv("ASTRA_TOKEN"),
     keyspace="colbert128"
 )

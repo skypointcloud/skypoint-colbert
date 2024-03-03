@@ -54,7 +54,7 @@ import os
 
 # astra db
 astra = AstraDB(
-    secure_connect_bundle="/Users/mingluo/Downloads/secure-connect-mingv1.zip",
+    secure_connect_bundle="./secure-connect-mingv1.zip",
     astra_token=os.getenv("ASTRA_TOKEN"),
     keyspace="colbert2",
     verbose=True,
