@@ -166,7 +166,7 @@ class ColbertTokenEmbeddings(TokenEmbeddings):
             for __part_i, perTokenEmbedding in enumerate(embedding):
                 perToken = PerTokenEmbeddings(parent_id=pid, id=__part_i, title=title, part=part)
                 perToken.add_embeddings(perTokenEmbedding.tolist())
-                print(f"    token embedding part {part} id {__part_i} parent id {pid}")
+                # print(f"    token embedding part {part} id {__part_i} parent id {pid}")
                 collectionEmbd.add_token_embeddings(perToken)
             collectionEmbds.append(collectionEmbd)
             # print(f"embedding part {part} collection id {pid}, collection size {len(collectionEmbd.get_all_token_embeddings())}")

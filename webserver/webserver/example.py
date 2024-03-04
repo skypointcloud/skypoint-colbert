@@ -71,7 +71,8 @@ from embedding import ColbertAstraRetriever
 
 retriever = ColbertAstraRetriever(astraDB=astra, colbertEmbeddings=colbert)
 answers = retriever.retrieve("what's the toll free number to call for help?")
-print(answers)
+for a in answers:
+    print(f"answer rank {a['rank']} score {a['score']}, answer is {a['body']}\n")
 
 
 astra.close()

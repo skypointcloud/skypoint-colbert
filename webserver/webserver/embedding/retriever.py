@@ -17,6 +17,8 @@ class ColbertAstraRetriever:
         self.verbose = verbose
 
     def retrieve(self, query: str, k: int=5):
+        if k > 10:
+            raise ValueError("k cannot be greater than 10")
 
         query_encodings = self.colbert.encode_query(query)
 
@@ -31,11 +33,14 @@ class ColbertAstraRetriever:
             rows = self.astra.session.execute(self.astra.query_colbert_parts_stmt, [title, part])
             embeddings_for_part = [tensor(row.bert_embedding) for row in rows]
             scores[(title, part)] = sum(maxsim(qv, embeddings_for_part) for qv in query_encodings)
-        # load the source chunk for the top 5
+        # load the source chunk for the top k documents
         docs_by_score = sorted(scores, key=scores.get, reverse=True)[:k]
         L = []
+        rank = 1
         for title, part in docs_by_score:
             rs = self.astra.session.execute(self.astra.query_part_by_pk_stmt, [title, part])
-            L.append({'title': title, 'body': rs.one().body})
+            score = scores[(title, part)]
+            L.append({'title': title, 'score': score.item(), 'rank': rank, 'body': rs.one().body})
+            rank=rank+1
         return L
 
