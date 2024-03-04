@@ -2,6 +2,14 @@ from embedding import ColbertEmbeddings
 from embedding import AstraDB
 from torch import tensor
 
+# max similarity between a query vector and a list of embeddings
+# The function returns the highest similarity score (i.e., the maximum dot product value) between the query vector and any of the embedding vectors in the list.
+# The function iterates over each embedding vector (e) in the embeddings.
+# For each e, it performs a dot product operation (@) with the query vector (qv).
+# The dot product of two vectors is a measure of their similarity. In the context of embeddings,
+# a higher dot product value usually indicates greater similarity.
+# The max function then takes the highest value from these dot product operations.
+# Essentially, it's picking the embedding vector that has the highest similarity to the query vector qv.
 def maxsim(qv, embeddings):
     return max(qv @ e for e in embeddings)
 
@@ -25,13 +33,17 @@ class ColbertAstraRetriever:
         # find the most relevant documents
         docparts = set()
         for qv in query_encodings:
+            # per token based retrieval
             rows = self.astra.session.execute(self.astra.query_colbert_ann_stmt, [list(qv)])
             docparts.update((row.title, row.part) for row in rows)
         # score each document
         scores = {}
         for title, part in docparts:
+            # find all the found parts so that we can do max similarity search
             rows = self.astra.session.execute(self.astra.query_colbert_parts_stmt, [title, part])
             embeddings_for_part = [tensor(row.bert_embedding) for row in rows]
+            # score based on The function returns the highest similarity score
+            #(i.e., the maximum dot product value) between the query vector and any of the embedding vectors in the list.
             scores[(title, part)] = sum(maxsim(qv, embeddings_for_part) for qv in query_encodings)
         # load the source chunk for the top k documents
         docs_by_score = sorted(scores, key=scores.get, reverse=True)[:k]
