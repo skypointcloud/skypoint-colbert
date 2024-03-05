@@ -149,12 +149,9 @@ class AstraDB:
 
         # insert colbert embeddings
         for passageEmbd in embeddings:
-            # execute_concurrent_with_args(self.session, self.insert_colbert_stmt, [(e.title(), e.part, e.id, e.get_embeddings()) for e in enumerate(passageEmbd.get_all_token_embeddings())])
-            for tokenEmbd in passageEmbd.get_all_token_embeddings():
-                self.session.execute(self.insert_colbert_stmt, (passageEmbd.title(), tokenEmbd.part, tokenEmbd.id, tokenEmbd.get_embeddings()))
-                if self.verbose:
-                    print(f"inserting colbert embedding title {passageEmbd.title()} part {tokenEmbd.part} id {tokenEmbd.id} size {len(tokenEmbd.get_embeddings())}")
-        # self.session.execute(self.insert_colbert_stmt, (title, part, embedding_id, bert_embedding))
+            title = passageEmbd.title()
+            parameters = [(title, e[1].part, e[1].id, e[1].get_embeddings()) for e in enumerate(passageEmbd.get_all_token_embeddings())] 
+            execute_concurrent_with_args(self.session, self.insert_colbert_stmt, parameters)
 
     def close(self):
         self.session.shutdown()
