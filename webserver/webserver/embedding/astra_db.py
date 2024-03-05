@@ -142,10 +142,10 @@ class AstraDB:
         embeddings: List[PassageEmbeddings]
     ) -> None:
         # insert chunks
-        for passageEmbd in embeddings:
-            self.insert_chunk(passageEmbd.title(), passageEmbd.part(), passageEmbd.get_text())
-            if self.verbose:
-                print(f"inserting chunk title {passageEmbd.title()} part {passageEmbd.part()} content {passageEmbd.get_text()}")
+        p_parameters = [(p.title(), p.part(), p.get_text()) for p in embeddings]
+        execute_concurrent_with_args(self.session, self.insert_chunk_stmt, p_parameters)
+        if (self.verbose):
+            print(f"inserting chunks {p_parameters}")
 
         # insert colbert embeddings
         for passageEmbd in embeddings:
