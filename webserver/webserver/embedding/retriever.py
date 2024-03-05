@@ -47,12 +47,11 @@ class ColbertAstraRetriever:
             scores[(title, part)] = sum(maxsim(qv, embeddings_for_part) for qv in query_encodings)
         # load the source chunk for the top k documents
         docs_by_score = sorted(scores, key=scores.get, reverse=True)[:k]
-        L = []
+        answers = []
         rank = 1
         for title, part in docs_by_score:
             rs = self.astra.session.execute(self.astra.query_part_by_pk_stmt, [title, part])
             score = scores[(title, part)]
-            L.append({'title': title, 'score': score.item(), 'rank': rank, 'body': rs.one().body})
+            answers.append({'title': title, 'score': score.item(), 'rank': rank, 'body': rs.one().body})
             rank=rank+1
-        return L
-
+        return answers

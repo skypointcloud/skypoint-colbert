@@ -1,4 +1,5 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
+import datetime
 import itertools
 import torch # it should part of colbert dependencies
 from .token_embedding import TokenEmbeddings, PerTokenEmbeddings, PassageEmbeddings
@@ -93,6 +94,7 @@ class ColbertTokenEmbeddings(TokenEmbeddings):
             nbits: int = 1,
             kmeans_niters: int = 4,
             nranks: int = 1,
+            query_maxlen: int = 32,
             **data: Any,
     ):
         self.colbert_config = ColBERTConfig(
@@ -101,6 +103,7 @@ class ColbertTokenEmbeddings(TokenEmbeddings):
             kmeans_niters=kmeans_niters,
             nranks=nranks,
             checkpoint=checkpoint,
+            query_maxlen=query_maxlen,
         )
         self.__doc_maxlen = doc_maxlen
         self.__nbits = nbits
@@ -109,6 +112,13 @@ class ColbertTokenEmbeddings(TokenEmbeddings):
         print("creating checkpoint")
         self.checkpoint = Checkpoint(self.colbert_config.checkpoint, colbert_config=self.colbert_config)
         self.encoder = CollectionEncoder(config=self.colbert_config, checkpoint=self.checkpoint)
+        self.__cuda = torch.cuda.is_available()
+        if self.__cuda:
+            self.checkpoint = self.checkpoint.cuda()
+            self.__cuda_device_count = torch.cuda.device_count()
+            self.__cuda_device_name = torch.cuda.get_device_name()
+
+        self.print_memory_stats("ColbertTokenEmbeddings")
 
 
     def embed_documents(self, texts: List[str], title: str="") -> List[PassageEmbeddings]:
@@ -135,9 +145,18 @@ class ColbertTokenEmbeddings(TokenEmbeddings):
 
         return collectionEmbd
 
-    def encode_query(self, query: str):
-        rc = self.checkpoint.queryFromText([query])
-        return rc[0]
+    def encode_queries(self, query: Union[str, List[str]], full_length_search: bool = False):
+        queries = query if type(query) is list else [query]
+        bsize = 128 if len(queries) > 128 else None
+
+        self.checkpoint.query_tokenizer.query_maxlen = self.colbert_config.query_maxlen
+        Q = self.checkpoint.queryFromText(queries, bsize=bsize, to_cpu=True, full_length_search=full_length_search)
+
+        return Q
+
+    def encode_query(self, query: str, full_length_search: bool = False):
+        Q = self.encode_queries(query, full_length_search)
+        return Q[0]
 
 
     def encode(self, texts: List[str], title: str="") -> List[PassageEmbeddings]:
@@ -180,3 +199,44 @@ class ColbertTokenEmbeddings(TokenEmbeddings):
     async def aembed_query(self, text: str) -> List[float]:
         """Asynchronous Embed query text."""
         return await run_in_executor(None, self.embed_query, text)
+
+    def print_message(self, *s, condition=True, pad=False):
+        s = ' '.join([str(x) for x in s])
+        msg = "[{}] {}".format(datetime.datetime.now().strftime("%b %d, %H:%M:%S"), s)
+
+        if condition:
+            msg = msg if not pad else f'\n{msg}\n'
+            print(msg, flush=True)
+
+        return msg
+
+    def print_memory_stats(self, message=''):
+        try:
+            import psutil  # Remove before releases? Or at least make optional with try/except.
+        except ImportError:
+            self.print_message("psutil not installed. Memory stats not available.")
+            return
+
+        global_info = psutil.virtual_memory()
+        total, available, used, free = global_info.total, global_info.available, global_info.used, global_info.free
+
+        info = psutil.Process().memory_info()
+        rss, vms, shared = info.rss, info.vms, info.shared
+        uss = psutil.Process().memory_full_info().uss
+
+        gib = 1024 ** 3
+
+        summary = f"""
+        "[PID: {os.getpid()}]
+        [{message}]
+        Available: {available / gib:,.1f} / {total / gib:,.1f}
+        Free: {free / gib:,.1f} / {total / gib:,.1f}
+        Usage: {used / gib:,.1f} / {total / gib:,.1f}
+
+        RSS: {rss  / gib:,.1f}
+        VMS: {vms  / gib:,.1f}
+        USS: {uss  / gib:,.1f}
+        SHARED: {shared  / gib:,.1f}
+        """.strip().replace('\n', '\t')
+
+        self.print_message(summary, pad=True)
