@@ -1,6 +1,7 @@
 from embedding import ColbertEmbeddings
 from embedding import AstraDB
 from torch import tensor
+import torch
 
 # max similarity between a query vector and a list of embeddings
 # The function returns the highest similarity score (i.e., the maximum dot product value) between the query vector and any of the embedding vectors in the list.
@@ -10,8 +11,13 @@ from torch import tensor
 # a higher dot product value usually indicates greater similarity.
 # The max function then takes the highest value from these dot product operations.
 # Essentially, it's picking the embedding vector that has the highest similarity to the query vector qv.
-def maxsim(qv, embeddings):
+def maxsim(qv, embeddings, is_cuda: bool=False):
+    if is_cuda:
+        # Assuming qv and embeddings are PyTorch tensors
+        qv = qv.to('cuda')  # Move qv to GPU
+        embeddings = [e.to('cuda') for e in embeddings]  # Move all embeddings to GPU
     return max(qv @ e for e in embeddings)
+
 
 class ColbertAstraRetriever:
     def __init__(
@@ -23,6 +29,7 @@ class ColbertAstraRetriever:
         self.astra = astraDB
         self.colbert = colbertEmbeddings
         self.verbose = verbose
+        self.is_cuda = torch.cuda.is_available()
 
     def retrieve(self, query: str, k: int=5):
         if k > 10:
@@ -44,7 +51,7 @@ class ColbertAstraRetriever:
             embeddings_for_part = [tensor(row.bert_embedding) for row in rows]
             # score based on The function returns the highest similarity score
             #(i.e., the maximum dot product value) between the query vector and any of the embedding vectors in the list.
-            scores[(title, part)] = sum(maxsim(qv, embeddings_for_part) for qv in query_encodings)
+            scores[(title, part)] = sum(maxsim(qv, embeddings_for_part, self.is_cuda) for qv in query_encodings)
         # load the source chunk for the top k documents
         docs_by_score = sorted(scores, key=scores.get, reverse=True)[:k]
         answers = []
