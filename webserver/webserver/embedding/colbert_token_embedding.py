@@ -93,18 +93,30 @@ class ColbertTokenEmbeddings(TokenEmbeddings):
             doc_maxlen: int = 220,
             nbits: int = 1,
             kmeans_niters: int = 4,
-            nranks: int = 1,
+            nranks: int = -1,
             query_maxlen: int = 32,
             **data: Any,
     ):
-        self.colbert_config = ColBERTConfig(
-            doc_maxlen=doc_maxlen,
-            nbits=nbits,
-            kmeans_niters=kmeans_niters,
-            nranks=nranks,
-            checkpoint=checkpoint,
-            query_maxlen=query_maxlen,
-        )
+        self.__cuda = torch.cuda.is_available()
+        if self.__cuda:
+            self.__cuda_device_count = torch.cuda.device_count()
+            self.__cuda_device_name = torch.cuda.get_device_name()
+            if nranks < -1:
+                nranks=self.__cuda_device_count
+            print(f"run on {self.__cuda_device_count} gpu and embeddings on {nranks} gpu")
+        else:
+            if nranks < 1:
+                nranks = 1
+
+        with Run().context(RunConfig(nranks=nranks)):
+            self.colbert_config = ColBERTConfig(
+                doc_maxlen=doc_maxlen,
+                nbits=nbits,
+                kmeans_niters=kmeans_niters,
+                nranks=nranks,
+                checkpoint=checkpoint,
+                query_maxlen=query_maxlen,
+            )
         self.__doc_maxlen = doc_maxlen
         self.__nbits = nbits
         self.__kmeans_niters = kmeans_niters
@@ -115,19 +127,13 @@ class ColbertTokenEmbeddings(TokenEmbeddings):
         self.__cuda = torch.cuda.is_available()
         if self.__cuda:
             self.checkpoint = self.checkpoint.cuda()
-            self.__cuda_device_count = torch.cuda.device_count()
-            self.__cuda_device_name = torch.cuda.get_device_name()
 
         self.print_memory_stats("ColbertTokenEmbeddings")
 
 
     def embed_documents(self, texts: List[str], title: str="") -> List[PassageEmbeddings]:
         """Embed search docs."""
-        if self.__is_cuda:
-            # TODO: implement GPU support
-            return self.encode(texts, title)
-        else:
-            return self.encode(texts, title)
+        return self.encode(texts, title)
 
 
     def embed_query(self, text: str, title: str) -> PassageEmbeddings:
