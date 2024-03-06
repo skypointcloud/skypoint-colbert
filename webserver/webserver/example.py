@@ -34,7 +34,6 @@ colbert = ColbertTokenEmbeddings(
     doc_maxlen=220,
     nbits=1,
     kmeans_niters=4,
-    nranks=1,
 )
 
 passageEmbeddings = colbert.embed_documents(texts=collections, title=title)
