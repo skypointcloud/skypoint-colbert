@@ -98,12 +98,16 @@ class ColbertTokenEmbeddings(TokenEmbeddings):
             **data: Any,
     ):
         self.__cuda = torch.cuda.is_available()
+        total_visible_gpus=0
         if self.__cuda:
             self.__cuda_device_count = torch.cuda.device_count()
             self.__cuda_device_name = torch.cuda.get_device_name()
-            if nranks < -1:
+            print(f"nrank {nranks}")
+            if nranks < 1:
                 nranks=self.__cuda_device_count
-            print(f"run on {self.__cuda_device_count} gpu and embeddings on {nranks} gpu")
+            if nranks > 1:
+                total_visible_gpus=self.__cuda_device_count
+            print(f"run on {self.__cuda_device_count} gpus and visible {total_visible_gpus} gpus embeddings on {nranks} gpus")
         else:
             if nranks < 1:
                 nranks = 1
@@ -118,6 +122,7 @@ class ColbertTokenEmbeddings(TokenEmbeddings):
                 nranks=nranks,
                 checkpoint=checkpoint,
                 query_maxlen=query_maxlen,
+                gpus=total_visible_gpus,
             )
         self.__doc_maxlen = doc_maxlen
         self.__nbits = nbits
