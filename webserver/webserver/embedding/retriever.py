@@ -61,4 +61,5 @@ class ColbertAstraRetriever:
             score = scores[(title, part)]
             answers.append({'title': title, 'score': score.item(), 'rank': rank, 'body': rs.one().body})
             rank=rank+1
+        del scores
         return answers

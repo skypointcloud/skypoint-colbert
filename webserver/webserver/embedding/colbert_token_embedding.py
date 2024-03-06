@@ -109,6 +109,8 @@ class ColbertTokenEmbeddings(TokenEmbeddings):
                 nranks = 1
 
         with Run().context(RunConfig(nranks=nranks)):
+            if self.__cuda:
+                torch.cuda.empty_cache()
             self.colbert_config = ColBERTConfig(
                 doc_maxlen=doc_maxlen,
                 nbits=nbits,
