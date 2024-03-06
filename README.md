@@ -18,6 +18,7 @@ Code is at this [folder](webserver/webserver/embedding) that includes
 * A ColBERT Embedding class
 * Astra loader
 * Astra vector based retriever including a ranker
+* It runs on CPU and GPU/Cuda (automatically runs all available GPUs)
 A chat bot [example](webserver/webserver/example.py) of RAG using ColBERT embedding, Astra DB vector store, retriever (including a default ranker).
 
 How to run the example and prerequisites:
@@ -129,10 +130,4 @@ cd webserver
 uvicorn main:app --reload
 ```
 
-# Next Step
-## Parallel loading of embeddings to Astra
-
-## Performance and configuration
-* Query performance of transformed one dimensional embedding
-* Configuration parameters of ColBERTConfig (chunk size, nbits, kmeans_nitters, nranks on CUDA, bsize, rerank?)
-* Two dimensioned index query is implemented in the index.py. Yet I need to measure the relevancy  rank.
+# Performance and configuration
