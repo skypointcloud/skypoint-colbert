@@ -74,6 +74,8 @@ answers = retriever.retrieve("what's the toll free number to call for help?")
 for a in answers:
     print(f"answer rank {a['rank']} score {a['score']}, answer is {a['body']}\n")
 
+# LangChain retriever
+print(retriever.get_relevant_documents("what's the toll free number to call for help?"))
 
 astra.close()
 

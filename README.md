@@ -17,7 +17,7 @@ Install `faiss-gpu` on CUDA
 Code is at this [folder](webserver/webserver/embedding) that includes
 * A ColBERT Embedding class
 * Astra loader
-* Astra vector based retriever including a ranker
+* Astra vector based retriever, a LangChain compatible retriever
 * It runs on CPU and GPU/Cuda (automatically runs all available GPUs)
 A chat bot [example](webserver/webserver/example.py) of RAG using ColBERT embedding, Astra DB vector store, retriever (including a default ranker).
 

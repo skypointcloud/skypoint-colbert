@@ -1,6 +1,12 @@
-from embedding import ColbertEmbeddings
+from embedding import ColbertTokenEmbeddings
+
 from embedding import AstraDB
+from langchain_core.retrievers import BaseRetriever
+from langchain_core.callbacks import CallbackManagerForRetrieverRun
+from langchain_core.documents import Document
+from pydantic import BaseModel
 from torch import tensor
+from typing import List
 import torch
 
 # max similarity between a query vector and a list of embeddings
@@ -19,15 +25,26 @@ def maxsim(qv, embeddings, is_cuda: bool=False):
     return max(qv @ e for e in embeddings)
 
 
-class ColbertAstraRetriever:
+class ColbertAstraRetriever(BaseRetriever):
+    astra: AstraDB
+    colbertEmbeddings: ColbertTokenEmbeddings
+    verbose: bool
+    is_cuda: bool=False
+
+    class Config:
+        arbitrary_types_allowed = True
+
     def __init__(
         self,
         astraDB: AstraDB,
-        colbertEmbeddings: ColbertEmbeddings,
-        verbose: bool=False
+        colbertEmbeddings: ColbertTokenEmbeddings,
+        verbose: bool=False,
+        **kwargs
     ):
+        # initialize pydantic base model
+        super().__init__(astra=astraDB, colbertEmbeddings=colbertEmbeddings, verbose=verbose, **kwargs)
         self.astra = astraDB
-        self.colbert = colbertEmbeddings
+        self.colbertEmbeddings = colbertEmbeddings
         self.verbose = verbose
         self.is_cuda = torch.cuda.is_available()
 
@@ -35,7 +52,7 @@ class ColbertAstraRetriever:
         if k > 10:
             raise ValueError("k cannot be greater than 10")
 
-        query_encodings = self.colbert.encode_query(query)
+        query_encodings = self.colbertEmbeddings.encode_query(query)
 
         # find the most relevant documents
         docparts = set()
@@ -61,5 +78,13 @@ class ColbertAstraRetriever:
             score = scores[(title, part)]
             answers.append({'title': title, 'score': score.item(), 'rank': rank, 'body': rs.one().body})
             rank=rank+1
+        # clean up on tensor memory on GPU
         del scores
         return answers
+
+    def _get_relevant_documents(
+        self, query: str, *, run_manager: CallbackManagerForRetrieverRun = None
+    ) -> List[Document]:
+        answers = self.retrieve(query)
+        documents = [Document(metadata={'title': d['title'], 'score': d['score'], 'rank': d['rank']}, page_content=d['body']) for d in answers]
+        return documents
