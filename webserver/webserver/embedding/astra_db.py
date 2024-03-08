@@ -139,8 +139,17 @@ class AstraDB:
     
     def insert_colbert_embeddings_chunks(
         self,
-        embeddings: List[PassageEmbeddings]
+        embeddings: List[PassageEmbeddings],
+        delete_existed_passage: bool = False
     ) -> None:
+        if delete_existed_passage:
+            for p in embeddings:
+                try:
+                    self.delete_title(p.title())
+                except Exception as e:
+                    # no need to throw error if the title does not exist
+                    # let the error propagate
+                    print(f"delete title {p.title()} error {e}")
         # insert chunks
         p_parameters = [(p.title(), p.part(), p.get_text()) for p in embeddings]
         execute_concurrent_with_args(self.session, self.insert_chunk_stmt, p_parameters)

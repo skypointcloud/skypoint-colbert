@@ -64,7 +64,8 @@ astra.ping()
 print("astra db is connected")
 
 # astra insert colbert embeddings
-astra.insert_colbert_embeddings_chunks(passageEmbeddings)
+astra.insert_colbert_embeddings_chunks(
+    embeddings=passageEmbeddings, delete_existed_passage=True)
 
 from embedding import ColbertAstraRetriever
 
