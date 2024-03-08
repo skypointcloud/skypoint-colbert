@@ -153,6 +153,14 @@ class AstraDB:
             parameters = [(title, e[1].part, e[1].id, e[1].get_embeddings()) for e in enumerate(passageEmbd.get_all_token_embeddings())] 
             execute_concurrent_with_args(self.session, self.insert_colbert_stmt, parameters)
 
+    def delete_title(self, title: str):
+        # Assuming `title` is a variable holding the title you want to delete
+        query = "DELETE FROM {}.chunks WHERE title = %s".format(self.keyspace)
+        self.session.execute(query, (title,))
+
+        query = "DELETE FROM {}.colbert_embeddings WHERE title = %s".format(self.keyspace)
+        self.session.execute(query, (title,))
+
     def close(self):
         self.session.shutdown()
         self.cluster.shutdown()
