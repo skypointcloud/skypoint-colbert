@@ -52,10 +52,12 @@ def max_similarity_torch(query_vector, embedding_list, is_cuda: bool=False):
     Returns:
     - max_sim: A float representing the highest similarity (dot product) score between the query vector and the embedding vectors in the list, computed on the GPU.
     """
-    # Ensure tensors are on the GPU
+    # stacks the list of embedding tensors into a single tensor
     if is_cuda:
         query_vector = query_vector.to('cuda')
         embedding_list = torch.stack(embedding_list).to('cuda')
+    else:
+        embedding_list = torch.stack(embedding_list)
 
     # Calculate the dot products in a vectorized manner on the GPU
     sims = torch.matmul(embedding_list, query_vector)
