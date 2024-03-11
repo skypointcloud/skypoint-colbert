@@ -93,7 +93,13 @@ class ColbertAstraRetriever(BaseRetriever):
         self.verbose = verbose
         self.is_cuda = torch.cuda.is_available()
 
-    def retrieve(self, query: str, k: int=10):
+    def retrieve(
+        self,
+        query: str,
+        k: int=10,
+        min_score: float=10.0,
+        **kwargs
+    ):
         #
         # if the query has fewer than a predefined number of of tokens Nq,
         # colbertEmbeddings will pad it with BERT special [mast] token up to length Nq.
@@ -130,7 +136,8 @@ class ColbertAstraRetriever(BaseRetriever):
         for title, part in docs_by_score:
             rs = self.astra.session.execute(self.astra.query_part_by_pk_stmt, [title, part])
             score = scores[(title, part)]
-            answers.append({'title': title, 'score': score.item(), 'rank': rank, 'body': rs.one().body})
+            if score.item() > min_score:
+                answers.append({'title': title, 'score': score.item(), 'rank': rank, 'body': rs.one().body})
             rank=rank+1
         # clean up on tensor memory on GPU
         del scores
