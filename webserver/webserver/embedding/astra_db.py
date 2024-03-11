@@ -49,6 +49,11 @@ class AstraDB:
 
         # prepare statements
 
+        chunk_counts_cql = f"""
+        SELECT COUNT(*) FROM {keyspace}.chunks
+        """
+        self.chunk_counts_stmt = self.session.prepare(chunk_counts_cql)
+
         insert_chunk_cql = f"""
         INSERT INTO {keyspace}.chunks (title, part, body)
         VALUES (?, ?, ?)
@@ -65,7 +70,7 @@ class AstraDB:
         SELECT title, part
         FROM {keyspace}.colbert_embeddings
         ORDER BY bert_embedding ANN OF ?
-        LIMIT 5
+        LIMIT ?
         """
         self.query_colbert_ann_stmt = self.session.prepare(query_colbert_ann_cql)
 

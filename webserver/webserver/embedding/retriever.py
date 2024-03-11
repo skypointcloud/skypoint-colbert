@@ -8,6 +8,7 @@ from pydantic import BaseModel
 from torch import tensor
 from typing import List
 import torch
+import math
 
 # max similarity between a query vector and a list of embeddings
 # The function returns the highest similarity score (i.e., the maximum dot product value) between the query vector and any of the embedding vectors in the list.
@@ -92,17 +93,25 @@ class ColbertAstraRetriever(BaseRetriever):
         self.verbose = verbose
         self.is_cuda = torch.cuda.is_available()
 
-    def retrieve(self, query: str, k: int=5):
-        if k > 10:
-            raise ValueError("k cannot be greater than 10")
-
+    def retrieve(self, query: str, k: int=10):
+        #
+        # if the query has fewer than a predefined number of of tokens Nq,
+        # colbertEmbeddings will pad it with BERT special [mast] token up to length Nq.
+        #
         query_encodings = self.colbertEmbeddings.encode_query(query)
+
+        count = self.astra.session.execute(self.astra.chunk_counts_stmt).one().count
+        k = min(k, count)
+
+        top_m = max(math.floor(len(query_encodings) / 2), 10)
+        if self.verbose:
+            print(f"Total number of chunks: {count}, query embeddings top_m: {top_m}")
 
         # find the most relevant documents
         docparts = set()
         for qv in query_encodings:
             # per token based retrieval
-            rows = self.astra.session.execute(self.astra.query_colbert_ann_stmt, [list(qv)])
+            rows = self.astra.session.execute(self.astra.query_colbert_ann_stmt, [list(qv), top_m])
             docparts.update((row.title, row.part) for row in rows)
         # score each document
         scores = {}
@@ -113,9 +122,7 @@ class ColbertAstraRetriever(BaseRetriever):
             embeddings_for_part = [tensor(row.bert_embedding) for row in rows]
             # score based on The function returns the highest similarity score
             #(i.e., the maximum dot product value) between the query vector and any of the embedding vectors in the list.
-            start_time = time.perf_counter()
             scores[(title, part)] = sum(max_similarity_torch(qv, embeddings_for_part, self.is_cuda) for qv in query_encodings)
-            latency = time.perf_counter() - start_time
         # load the source chunk for the top k documents
         docs_by_score = sorted(scores, key=scores.get, reverse=True)[:k]
         answers = []
