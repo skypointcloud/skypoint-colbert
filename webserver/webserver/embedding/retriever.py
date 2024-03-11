@@ -116,8 +116,6 @@ class ColbertAstraRetriever(BaseRetriever):
             start_time = time.perf_counter()
             scores[(title, part)] = sum(max_similarity_torch(qv, embeddings_for_part, self.is_cuda) for qv in query_encodings)
             latency = time.perf_counter() - start_time
-            print(f"max similarity search latency {latency}")
-            print(f"max similarity search score {scores[(title, part)]}")
         # load the source chunk for the top k documents
         docs_by_score = sorted(scores, key=scores.get, reverse=True)[:k]
         answers = []
