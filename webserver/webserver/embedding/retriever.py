@@ -99,6 +99,7 @@ class ColbertAstraRetriever(BaseRetriever):
         k: int=10,
         min_score: float=10.0,
         query_maxlen: int=64,
+        num_results: int=3,
         **kwargs
     ):
         #
@@ -138,7 +139,7 @@ class ColbertAstraRetriever(BaseRetriever):
         for title, part in docs_by_score:
             rs = self.astra.session.execute(self.astra.query_part_by_pk_stmt, [title, part])
             score = scores[(title, part)]
-            if score.item() > min_score:
+            if score.item() > min_score and len(answers) < num_results:
                 answers.append({'title': title, 'score': score.item(), 'rank': rank, 'body': rs.one().body})
             rank=rank+1
         # clean up on tensor memory on GPU
