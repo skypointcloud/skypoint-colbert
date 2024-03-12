@@ -158,17 +158,27 @@ class ColbertTokenEmbeddings(TokenEmbeddings):
 
         return collectionEmbd
 
-    def encode_queries(self, query: Union[str, List[str]], full_length_search: bool = False):
+    def encode_queries(
+            self,
+            query: Union[str, List[str]],
+            full_length_search: bool = False,
+            query_maxlen: int = 32,
+        ):
         queries = query if type(query) is list else [query]
         bsize = 128 if len(queries) > 128 else None
 
-        self.checkpoint.query_tokenizer.query_maxlen = self.colbert_config.query_maxlen
+        self.checkpoint.query_tokenizer.query_maxlen = max(query_maxlen, self.colbert_config.query_maxlen)
         Q = self.checkpoint.queryFromText(queries, bsize=bsize, to_cpu=True, full_length_search=full_length_search)
 
         return Q
 
-    def encode_query(self, query: str, full_length_search: bool = False):
-        Q = self.encode_queries(query, full_length_search)
+    def encode_query(
+            self,
+            query: str,
+            full_length_search: bool = False,
+            query_maxlen: int = 32,
+        ):
+        Q = self.encode_queries(query, full_length_search, query_maxlen=query_maxlen)
         return Q[0]
 
 

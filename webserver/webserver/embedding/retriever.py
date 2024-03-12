@@ -98,26 +98,28 @@ class ColbertAstraRetriever(BaseRetriever):
         query: str,
         k: int=10,
         min_score: float=10.0,
+        query_maxlen: int=64,
         **kwargs
     ):
         #
         # if the query has fewer than a predefined number of of tokens Nq,
         # colbertEmbeddings will pad it with BERT special [mast] token up to length Nq.
         #
-        query_encodings = self.colbertEmbeddings.encode_query(query)
+        query_encodings = self.colbertEmbeddings.encode_query(query, query_maxlen=query_maxlen)
 
         count = self.astra.session.execute(self.astra.chunk_counts_stmt).one().count
         k = min(k, count)
 
-        top_m = max(math.floor(len(query_encodings) / 2), 10)
+        # the min of query_maxlen is 32
+        top_k = max(math.floor(len(query_encodings) / 2), 16)
         if self.verbose:
-            print(f"Total number of chunks: {count}, query embeddings top_m: {top_m}")
+            print(f"Total number of chunks: {count}, query length {len(query)} embeddings top_k: {top_k}")
 
         # find the most relevant documents
         docparts = set()
         for qv in query_encodings:
             # per token based retrieval
-            rows = self.astra.session.execute(self.astra.query_colbert_ann_stmt, [list(qv), top_m])
+            rows = self.astra.session.execute(self.astra.query_colbert_ann_stmt, [list(qv), top_k])
             docparts.update((row.title, row.part) for row in rows)
         # score each document
         scores = {}
