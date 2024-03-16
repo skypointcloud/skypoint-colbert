@@ -2,6 +2,7 @@ from typing import Any, Dict, List, Union
 import datetime
 import itertools
 import torch # it should part of colbert dependencies
+from torch import Tensor
 from .token_embedding import TokenEmbeddings, PerTokenEmbeddings, PassageEmbeddings
 from langchain_core.pydantic_v1 import Extra, root_validator
 
@@ -143,20 +144,9 @@ class ColbertTokenEmbeddings(TokenEmbeddings):
         return self.encode(texts, title)
 
 
-    def embed_query(self, text: str, title: str) -> PassageEmbeddings:
+    def embed_query(self, text: str) -> Tensor:
         """Embed query text."""
-        collections=[]
-        collections.append(text)
-        embeddings, count = self.encoder.encode_passages(collections)
-        start_indices = [0] + list(itertools.accumulate(count[:-1]))
-        embeddings_by_part = [embeddings[start:start+count] for start, count in zip(start_indices, count)]
-
-        perToken = PerTokenEmbeddings(title=title, text=text)
-        collectionEmbd = PassageEmbeddings(title=title, text=text)
-        for __part, embedding in enumerate(embeddings_by_part):
-            perToken.add_embeddings(embedding)
-
-        return collectionEmbd
+        pass
 
     def encode_queries(
             self,
