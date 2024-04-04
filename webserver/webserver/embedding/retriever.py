@@ -93,7 +93,7 @@ class ColbertAstraRetriever():
         self,
         query: str,
         k: int=10,
-        query_maxlen: int=64,
+        query_maxlen: int=-1,
         **kwargs
     ):
         #
@@ -102,13 +102,10 @@ class ColbertAstraRetriever():
         #
         query_encodings = self.colbertEmbeddings.encode_query(query, query_maxlen=query_maxlen)
 
-        count = self.astra.session.execute(self.astra.chunk_counts_stmt).one().count
-        k = min(k, count)
-
         # the min of query_maxlen is 32
         top_k = max(math.floor(len(query_encodings) / 2), 16)
         if self.verbose:
-            print(f"Total number of chunks: {count}, query length {len(query)} embeddings top_k: {top_k}")
+            print(f"query length {len(query)} embeddings top_k: {top_k}")
 
         # find the most relevant documents
         docparts = set()

@@ -12,7 +12,13 @@ from colbert.infra import Run, RunConfig, ColBERTConfig
 from colbert.data import Queries
 from colbert.indexing.collection_encoder import CollectionEncoder
 from colbert.modeling.checkpoint import Checkpoint
+from colbert.modeling.tokenization import QueryTokenizer
 
+
+def calculate_query_maxlen(tokens: List[List[str]]) -> int:
+    max_token_length = max(len(inner_list) for inner_list in tokens)
+    offset = max_token_length % 2
+    return max_token_length + offset
 
 
 class ColbertTokenEmbeddings(TokenEmbeddings):
@@ -132,6 +138,7 @@ class ColbertTokenEmbeddings(TokenEmbeddings):
         print("creating checkpoint")
         self.checkpoint = Checkpoint(self.colbert_config.checkpoint, colbert_config=self.colbert_config)
         self.encoder = CollectionEncoder(config=self.colbert_config, checkpoint=self.checkpoint)
+        self.query_tokenizer = QueryTokenizer(self.colbert_config)
         self.__cuda = torch.cuda.is_available()
         if self.__cuda:
             self.checkpoint = self.checkpoint.cuda()
@@ -152,13 +159,17 @@ class ColbertTokenEmbeddings(TokenEmbeddings):
             self,
             query: Union[str, List[str]],
             full_length_search: bool = False,
-            query_maxlen: int = 32,
+            query_maxlen: int = -1,
         ):
         queries = query if type(query) is list else [query]
         bsize = 128 if len(queries) > 128 else None
 
-        self.checkpoint.query_tokenizer.query_maxlen = max(query_maxlen, self.colbert_config.query_maxlen)
-        Q = self.checkpoint.queryFromText(queries, bsize=bsize, to_cpu=True, full_length_search=full_length_search)
+        tokens = self.query_tokenizer.tokenize(queries)
+        if query_maxlen == -1:
+            query_maxlen = calculate_query_maxlen(tokens)
+
+        self.checkpoint.query_tokenizer.query_maxlen = query_maxlen
+        Q = self.checkpoint.queryFromText(queries, bsize=bsize, to_cpu=(not self.__is_cuda), full_length_search=full_length_search)
 
         return Q
 
