@@ -120,7 +120,7 @@ class AstraDB:
 
         self.create_index("""
             CREATE CUSTOM INDEX colbert_ann ON colbert_embeddings(bert_embedding) USING 'StorageAttachedIndex'
-  WITH OPTIONS = { 'similarity_function': 'DOT_PRODUCT' };
+  WITH OPTIONS = { 'source_model': 'bert' };
         """)
         print("Created index on colbert_embeddings table")
                              
