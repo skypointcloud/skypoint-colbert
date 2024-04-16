@@ -10,13 +10,11 @@ from langchain.docstore.document import Document
 from pydantic import BaseModel
 from torch import tensor
 
-from .astra_db import ColbertAstraDB
+from .astra_db import AstraDB
 from .colbert_token_embedding import (  # type: ignore
     ColbertTokenEmbeddings,
     get_colbert_embeddings,
 )
-
-logger = logging.getLogger(__name__)
 
 # max similarity between a query vector and a list of embeddings
 # The function returns the highest similarity score (i.e., the maximum dot product value) between the query vector and any of the embedding vectors in the list.
@@ -87,12 +85,12 @@ class ColbertAstraRetriever:
     It has a method to retrieve documents for a single query and another method to retrieve documents for multiple queries concurrently.
 
     Attributes:
-    - astra: An instance of ColbertAstraDB for connecting to AstraDB.
+    - astra: An instance of AstraDB for connecting to AstraDB.
     - colbertEmbeddings: An instance of ColbertTokenEmbeddings for encoding queries.
     - verbose: A boolean flag to enable verbose logging.
     - is_cuda: A boolean flag indicating whether GPU acceleration is available.
     """
-    astra: ColbertAstraDB
+    astra: AstraDB
     colbertEmbeddings: ColbertTokenEmbeddings
     verbose: bool
     is_cuda: bool = False
@@ -102,7 +100,7 @@ class ColbertAstraRetriever:
 
     def __init__(
         self,
-        astraDB: ColbertAstraDB,
+        astraDB: AstraDB,
         colbertEmbeddings: ColbertTokenEmbeddings,
         verbose: bool = False,
         **kwargs: dict,
@@ -129,7 +127,7 @@ class ColbertAstraRetriever:
         )
 
         top_k = max(math.floor(len(query_encodings) / 2), 16)
-        logger.info(f"query length {len(query)} embeddings top_k: {top_k}")
+        logging.info(f"query length {len(query)} embeddings top_k: {top_k}")
 
         # find the most relevant documents
         docparts: set = set()
@@ -188,7 +186,7 @@ class ColbertAstraRetriever:
             rank = rank + 1
         # clean up on tensor memory on GPU
         del scores
-        logger.info(
+        logging.info(
             f"{index} Index Time taken to execute all astra queries = %s",
             time.time() - start_time,
         )
@@ -232,10 +230,10 @@ def get_colbert_answer(
     colbert_embedding_table: str,
 ) -> List[Document]:
     """
-    Retrieve documents from ColbertAstraDB for a list of queries.
+    Retrieve documents from AstraDB for a list of queries.
     """
     start_time = time.time()
-    astra = ColbertAstraDB(
+    astra = AstraDB(
         session=astra_session,
         keyspace=astra_keyspace,
         text_table=colbert_text_table,
@@ -251,7 +249,7 @@ def get_colbert_answer(
         documents.append(
             Document(page_content=a.get("body"), metadata={"source": a.get("title")})
         )
-    logger.info(
-        f"Time taken to retrieve documents from ColbertAstraDB = {time.time() - start_time}"
+    logging.info(
+        f"Time taken to retrieve documents from AstraDB = {time.time() - start_time}"
     )
     return documents

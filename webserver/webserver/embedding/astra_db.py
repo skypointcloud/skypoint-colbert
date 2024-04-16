@@ -6,7 +6,7 @@ from constants import (
 )
 
 
-class ColbertAstraDB:
+class AstraDB:
     """
     Singleton class to manage the connection to the AstraDB instance for Colbert embeddings
     It uses previously setup connection to the AstraDB instance
@@ -28,12 +28,11 @@ class ColbertAstraDB:
         embedding_table: str,
         timeout: int = 60,
         **kwargs: dict,
-    ) -> "ColbertAstraDB":
+    ) -> "AstraDB":
         if keyspace not in cls._instances:
-            cls._instances[keyspace] = super(ColbertAstraDB, cls).__new__(cls)
-            cls._instances[keyspace].__init__(
-                session, keyspace, text_table, embedding_table, **kwargs
-            )
+            instance = object.__new__(cls)
+            instance.__init__(session, keyspace, text_table, embedding_table, **kwargs)
+            cls._instances[keyspace] = instance
         return cls._instances[keyspace]
 
     def __init__(
