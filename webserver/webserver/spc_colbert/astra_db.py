@@ -1,5 +1,5 @@
 from cassandra.cluster import Session
-from constants import (
+from .constants import (
     QUERY_COLBERT_ANN_CQL,
     QUERY_COLBERT_PARTS_CQL,
     QUERY_PARTS_BY_PK,

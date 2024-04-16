@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Query
 from typing import List
-from embedding import ColbertEmbeddings, ColbertTokenEmbeddings, NormalizationCategory
+from spc_colbert import ColbertEmbeddings, ColbertTokenEmbeddings, NormalizationCategory
 import torch
 import os
 import uvicorn

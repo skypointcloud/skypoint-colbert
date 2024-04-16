@@ -8,6 +8,8 @@ from colbert.modeling.checkpoint import Checkpoint
 from colbert.modeling.tokenization import QueryTokenizer
 from langchain_core.pydantic_v1 import root_validator
 from torch import Tensor
+from cachetools import TTLCache, cached
+from .constants import ONE_YEAR_IN_SECONDS
 
 from .token_embedding import PassageEmbeddings, TokenEmbeddings
 
@@ -169,8 +171,8 @@ class ColbertTokenEmbeddings(TokenEmbeddings):
     ) -> List[PassageEmbeddings]:
         """Embed search docs."""
         return self.encode(texts, title)
-
-
+    
+@cached(cache=TTLCache(maxsize=1024, ttl=ONE_YEAR_IN_SECONDS))
 def get_colbert_embeddings() -> ColbertTokenEmbeddings:
     """
     Get colbert embeddings.

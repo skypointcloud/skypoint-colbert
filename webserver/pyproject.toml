@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "spc-colbert"
-version = "0.1.1"
+version = "0.1.5"
 description = ""
 authors = ["Avi Sahney <avi.sahney@skypointcloud.com>"]
 readme = "README.md"
