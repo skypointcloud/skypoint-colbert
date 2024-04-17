@@ -5,10 +5,12 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any, List
 
 import torch
+import re
 from cassandra.cluster import Session
 from langchain.docstore.document import Document
 from pydantic import BaseModel
 from torch import tensor
+from urllib.parse import unquote
 
 from .astra_db import AstraDB
 from .colbert_token_embedding import (  # type: ignore
@@ -246,8 +248,11 @@ def get_colbert_answer(
     answers = retriever.retrieve_concurrently(queries)
     documents = []
     for a in answers:
+        source = unquote(a.get("title"))
+        source = re.sub(r'_[0-9]+$', '', source)
+        logging.info("Retrieved source = %s", source)
         documents.append(
-            Document(page_content=a.get("body"), metadata={"source": a.get("title")})
+            Document(page_content=a.get("body"), metadata={"source": source})
         )
     logging.info(
         f"Time taken to retrieve documents from AstraDB = {time.time() - start_time}"
