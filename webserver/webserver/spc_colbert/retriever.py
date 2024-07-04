@@ -248,9 +248,9 @@ def get_colbert_answer(
     answers = retriever.retrieve_concurrently(queries)
     documents = []
     for a in answers:
+        logging.info(f"Title: {a.get('title')},\n body: {a.get('body')}")
         source = unquote(a.get("title"))
         source = re.sub(r'_[0-9]+$', '', source)
-        logging.info("Retrieved source = %s", source)
         documents.append(
             Document(page_content=a.get("body"), metadata={"source": source})
         )
