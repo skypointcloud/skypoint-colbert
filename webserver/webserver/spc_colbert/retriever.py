@@ -230,6 +230,7 @@ def get_colbert_answer(
     astra_keyspace: str,
     colbert_text_table: str,
     colbert_embedding_table: str,
+    k : int = 5,
 ) -> List[Document]:
     """
     Retrieve documents from AstraDB for a list of queries.
@@ -245,7 +246,7 @@ def get_colbert_answer(
     retriever = ColbertAstraRetriever(
         astraDB=astra, colbertEmbeddings=colbert, verbose=True
     )
-    answers = retriever.retrieve_concurrently(queries)
+    answers = retriever.retrieve_concurrently(queries ,k)
     documents = []
     for a in answers:
         logging.info(f"Title: {a.get('title')},\n body: {a.get('body')}")
