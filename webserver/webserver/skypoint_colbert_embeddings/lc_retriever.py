@@ -1,7 +1,7 @@
-from embedding import ColbertTokenEmbeddings
+from spc_colbert import ColbertTokenEmbeddings
 
-from embedding import AstraDB
-from embedding import ColbertAstraRetriever
+from spc_colbert import AstraDB
+from spc_colbert import ColbertAstraRetriever
 from langchain_core.retrievers import BaseRetriever
 from langchain_core.callbacks import CallbackManagerForRetrieverRun
 from langchain_core.documents import Document

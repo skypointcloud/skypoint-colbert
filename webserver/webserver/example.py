@@ -28,7 +28,7 @@ for part in splits:
 
 print(f"title {title}, doc size {len(docs)} splitted size {len(collections)}")
 
-from embedding import ColbertTokenEmbeddings
+from spc_colbert import ColbertTokenEmbeddings
 
 colbert = ColbertTokenEmbeddings(
     doc_maxlen=220,
@@ -48,7 +48,7 @@ for pEmbd in passageEmbeddings:
         print(f"    token embedding id {tokenEmbd.id} parent {tokenEmbd.parent_id} size {len(tokenEmbd.get_embeddings())}")
 
 
-from embedding import AstraDB
+from spc_colbert import AstraDB
 import os
 
 # astra db
@@ -67,7 +67,7 @@ print("astra db is connected")
 astra.insert_colbert_embeddings_chunks(
     embeddings=passageEmbeddings, delete_existed_passage=True)
 
-from embedding import ColbertAstraRetriever
+from spc_colbert import ColbertAstraRetriever
 
 retriever = ColbertAstraRetriever(astraDB=astra, colbertEmbeddings=colbert, verbose=True)
 answers = retriever.retrieve("what's the toll free number to call for help?")
@@ -75,7 +75,7 @@ for a in answers:
     print(f"answer rank {a['rank']} score {a['score']}, answer is {a['body']}\n")
 
 # LangChain retriever
-from embedding import ColbertAstraLangChainRetriever
+from spc_colbert import ColbertAstraLangChainRetriever
 lc_retriever = ColbertAstraLangChainRetriever(astraDB=astra, colbertEmbeddings=colbert, verbose=True)
 print(lc_retriever.get_relevant_documents("what's the toll free number to call for help?"))
 

@@ -1,24 +1,18 @@
 [tool.poetry]
-name = "webserver"
-version = "0.1.0"
+name = "spc-colbert"
+version = "0.3"
 description = ""
-authors = ["ming luo <itestmycode@gmail.com>"]
+authors = ["Avi Sahney <avi.sahney@skypointcloud.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.9"
-pyarrow = "14.0.0"
-torch = "2.2.0"
-colbert-ai = "0.2.19"
-fastapi = "^0.109.2"
-uvicorn = "^0.27.1"
-ragstack-ai = "^0.7.0"
-faiss-cpu = "^1.7.4"
-cassandra-driver = "^3.29.0"
-astrapy = "^0.7.6"
-pypdf = "^4.0.2"
+torch = "^2.2.0"
+colbert-ai = "^0.2.19"
 
+[[tool.poetry.packages]]
+include = "**/*"
+from = "webserver"
 
 [build-system]
-requires = ["poetry-core"]
+requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
